@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Visibility {
+  PUBLIC
+  MEMBERS
+  PRIVATE
+}
+
+enum UserRole {
+  MEMBER
+  ADMIN
+}
+
+enum MemberStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+}
+
+enum EntryType {
+  EXPLANATION
+  DERIVATION
+  EXAMPLE
+  QUESTION
+  REFERENCE
+}
+
+enum RelationType {
+  RELATED_TO
+  OPPOSITE_OF
+  LEADS_TO
+  EXAMPLE_OF
+  PROJECTION_OF
+  SUGGESTS
+}
+
+enum ExplorationAction {
+  SEARCH
+  OPEN_CONCEPT
+  SELECT_CONCEPT
+  RETURN_TO_GRAPH
+  REVEAL_SUGGESTION
+}
+
+enum ReviewStatus {
+  PENDING
+  REVIEWED
+  ACCEPTED
+  REJECTED
+}
+
+// USERS AND ACCESS
+
+model User {
+  id     String       @id @default(cuid())
+  email  String       @unique
+  name   String?
+  role   UserRole     @default(MEMBER)
+  status MemberStatus @default(PENDING)
+
+  saveHistory         Boolean @default(false)
+  contributeInterests Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  explorations  ExplorationSession[]
+  savedPaths    SavedPath[]
+  questions     Question[]
+  topicRequests TopicRequest[]
+}
+
+// KNOWLEDGE BASE
+
+model Concept {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  description String?
+  difficulty  Int     @default(1)
+
+  // Hidden semantic coordinate plane
+  x Float @default(0)
+  y Float @default(0)
+
+  visibility  Visibility @default(PRIVATE)
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries KnowledgeEntry[]
+
+  outgoing ConceptConnection[] @relation("ConnectionSource")
+  incoming ConceptConnection[] @relation("ConnectionTarget")
+
+  events    ExplorationEvent[]
+  questions Question[]
+
+  @@index([visibility])
+  @@index([difficulty])
+}
+
+model ConceptConnection {
+  id String @id @default(cuid())
+
+  fromConceptId String
+  toConceptId   String
+
+  type        RelationType
+  strength    Float        @default(0.5)
+  directional Boolean      @default(true)
+
+  // Curated or suggested connection
+  isSuggested Boolean @default(false)
+
+  fromConcept Concept @relation("ConnectionSource", fields: [fromConceptId], references: [id], onDelete: Cascade)
+
+  toConcept Concept @relation("ConnectionTarget", fields: [toConceptId], references: [id], onDelete: Cascade)
+
+  @@unique([fromConceptId, toConceptId, type])
+  @@index([toConceptId])
+}
+
+model KnowledgeEntry {
+  id        String @id @default(cuid())
+  conceptId String
+
+  title   String
+  content String
+  type    EntryType
+
+  difficulty Int        @default(1)
+  visibility Visibility @default(PRIVATE)
+  order      Int        @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@index([conceptId, visibility])
+}
+
+// EXPLORATION HISTORY
+
+model ExplorationSession {
+  id     String  @id @default(cuid())
+  userId String?
+
+  // Anonymous browser session token hash
+  anonymousKeyHash String? @unique
+
+  // Saved React Flow nodes, viewport and UI state
+  graphState Json?
+
+  startedAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  events ExplorationEvent[]
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model ExplorationEvent {
+  id        String  @id @default(cuid())
+  sessionId String
+  conceptId String?
+
+  action ExplorationAction
+
+  // Optional linked source concept or selection metadata
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  session ExplorationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  concept Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId, createdAt])
+  @@index([sessionId, action, conceptId])
+}
+
+model SavedPath {
+  id     String @id @default(cuid())
+  userId String
+
+  title    String
+  pathData Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// VISITOR FEEDBACK
+
+model Question {
+  id        String  @id @default(cuid())
+  userId    String
+  conceptId String?
+
+  content String
+  status  ReviewStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  concept Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+}
+
+model TopicRequest {
+  id     String @id @default(cuid())
+  userId String
+
+  topic  String
+  reason String?
+  status ReviewStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ResearchDraft {
+  id      String @id @default(cuid())
+  title   String
+  content String
+
+  // Never public until explicitly published elsewhere
+  visibility Visibility @default(PRIVATE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
