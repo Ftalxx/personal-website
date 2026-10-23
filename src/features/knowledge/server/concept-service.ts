@@ -1,11 +1,12 @@
 
 import "server-only";
 
-import { prisma } from "@/lib/db/prisma";
+import { getPrisma } from "@/lib/db/prisma";
 import { Visibility } from "@/generated/prisma/client";
 
 // Find a public concept by slug.
 export async function getConceptBySlug(slug: string) {
+  const prisma = getPrisma();
   return prisma.concept.findFirst({
     where: {
       slug,
@@ -16,6 +17,7 @@ export async function getConceptBySlug(slug: string) {
 
 // Get all public concepts.
 export async function getPublicConcepts() {
+  const prisma = getPrisma();
   return prisma.concept.findMany({
     where: {
       visibility: Visibility.PUBLIC,
@@ -28,6 +30,7 @@ export async function getPublicConcepts() {
 
 // Get a concept with its publicly accessible connections.
 export async function getConceptWithConnections(slug: string) {
+  const prisma = getPrisma();
   const concept = await getConceptBySlug(slug);
 
   if (!concept) {
