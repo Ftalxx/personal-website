@@ -1,26 +1,54 @@
+
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-space: #09070F;
+  --bg-card: #171226;
+  --accent-uv: #7B2CBF;
+  --accent-radiation: #3A86FF;
+  --accent-opposite: #501717;
+  --accent-same: #173f7e;
+  --text-light: #F3EFFE;
+
+  --background: var(--bg-space);
+  --foreground: var(--text-light);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-space: var(--bg-space);
+  --color-card: var(--bg-card);
+  --color-uv: var(--accent-uv);
+  --color-radiation: var(--accent-radiation);
+  --color-opposite: var(--accent-opposite);
+  --color-same: var(--accent-same);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-space);
+  color: var(--text-light);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* React Flow visual theme */
+
+.knowledge-graph {
+  --xy-background-color: var(--bg-space);
+  --xy-controls-button-background-color: var(--bg-card);
+  --xy-controls-button-background-color-hover: #261D3D;
+  --xy-controls-button-color: var(--text-light);
+  --xy-controls-button-color-hover: var(--accent-radiation);
+  --xy-controls-button-border-color: #332548;
+  --xy-minimap-background-color: var(--bg-card);
+}
+
+.knowledge-graph .react-flow__background {
+  opacity: 0.5;
 }
