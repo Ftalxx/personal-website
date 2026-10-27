@@ -1,10 +1,13 @@
 
 import { Suspense } from "react";
-
+import { connection } from "next/server";
 import KnowledgeGraph from "@/components/knowledge/KnowledgeGraph";
 import { getPublicGraph } from "@/features/knowledge/server/connection-service";
 
 async function GraphContent() {
+  // Do not execute the database query during prerendering.
+  await connection();
+
   const { nodes, edges } = await getPublicGraph();
 
   if (nodes.length === 0) {
