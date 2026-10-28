@@ -85,6 +85,7 @@ model Concept {
   title       String
   description String?
   difficulty  Int     @default(1)
+  
 
   // Hidden semantic coordinate plane
   x Float @default(0)
@@ -106,6 +107,8 @@ model Concept {
 
   @@index([visibility])
   @@index([difficulty])
+
+  passages ManuscriptPassage[]
 }
 
 model ConceptConnection {
@@ -248,4 +251,34 @@ model ResearchDraft {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+model ManuscriptPassage {
+  id        String @id @default(cuid())
+  conceptId String
+
+  // Which manuscript section contains this passage
+  sectionKey   String
+  sectionTitle String
+
+  // Original text, including LaTeX math
+  content String @db.Text
+
+  // Preserve the day the passage was written
+  writtenAt DateTime @default(now())
+
+  // Track later alterations independently
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Int @default(0)
+
+  // Never publish new writing automatically
+  visibility Visibility @default(PRIVATE)
+
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@index([conceptId, sectionKey, writtenAt])
+  @@index([conceptId, visibility])
 }
