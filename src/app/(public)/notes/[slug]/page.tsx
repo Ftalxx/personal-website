@@ -2,7 +2,6 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 
 import { getPrisma } from "@/lib/db/prisma";
 import ManuscriptWorkspace from

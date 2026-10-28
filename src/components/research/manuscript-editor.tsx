@@ -13,6 +13,7 @@ type Section = {
 type Props = {
   title?: string;
   author?: string;
+  date: string;
 };
 
 const sample = String.raw`{abstract}
@@ -74,6 +75,7 @@ function MathText({ text }: { text: string }) {
 export default function ManuscriptEditor({
   title = "Quantum Mechanics",
   author = "Veronica Segovia",
+  date,
 }: Props) {
   const [sections, setSections] = useState<Section[]>(() =>
     parseManuscript(sample).sections.map((section) => ({
@@ -86,12 +88,6 @@ export default function ManuscriptEditor({
   const [entry, setEntry] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [date] = useState(() =>
-    new Intl.DateTimeFormat("en-US", {
-      dateStyle: "long",
-      timeZone: "America/New_York",
-    }).format(new Date())
-  );
 
   const topic = getTopic(entry);
   const existing = sections.find((section) => normalize(section.title) === normalize(topic));
